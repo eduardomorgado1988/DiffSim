@@ -1,1 +1,923 @@
+classdef DiffSim_Orthopyroxene < matlab.apps.AppBase
 
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                     matlab.ui.Figure
+        CalculatedprofileLabel       matlab.ui.control.Label
+        MeasuredprofileLabel         matlab.ui.control.Label
+        InitialprofileLabel          matlab.ui.control.Label
+        StartcalculationButton       matlab.ui.control.Button
+        milleniaLabel                matlab.ui.control.Label
+        yearsLabel                   matlab.ui.control.Label
+        daysLabel                    matlab.ui.control.Label
+        hoursLabel                   matlab.ui.control.Label
+        minutesLabel                 matlab.ui.control.Label
+        secondsLabel                 matlab.ui.control.Label
+        EditField_millennia          matlab.ui.control.EditField
+        EditField_years              matlab.ui.control.EditField
+        EditField_days               matlab.ui.control.EditField
+        EditField_hours              matlab.ui.control.EditField
+        EditField_minutes            matlab.ui.control.EditField
+        EditField_seconds            matlab.ui.control.EditField
+        Image2                       matlab.ui.control.Image
+        Image                        matlab.ui.control.Image
+        EditField_SSM                matlab.ui.control.EditField
+        LeastsquarebestfittingLabel  matlab.ui.control.Label
+        DropDown_Timescale_error     matlab.ui.control.DropDown
+        CalculateLabel               matlab.ui.control.Label
+        EditField_fo2_error          matlab.ui.control.NumericEditField
+        EditField_temperature_error  matlab.ui.control.NumericEditField
+        DiffSimOrthopyroxeneLabel    matlab.ui.control.Label
+        Label_2                      matlab.ui.control.Label
+        Label                        matlab.ui.control.Label
+        EditField_Maxyaxis           matlab.ui.control.NumericEditField
+        MaxyaxisLabel                matlab.ui.control.Label
+        EditField_Minyaxis           matlab.ui.control.NumericEditField
+        MinyaxisLabel                matlab.ui.control.Label
+        EditField_Maxxaxis           matlab.ui.control.NumericEditField
+        MaxxaxisLabel                matlab.ui.control.Label
+        EditField_Minxaxis           matlab.ui.control.NumericEditField
+        MinxaxisLabel                matlab.ui.control.Label
+        EditField_Traverse_angle     matlab.ui.control.NumericEditField
+        TraverseangleLabel           matlab.ui.control.Label
+        EditField_Plunge             matlab.ui.control.NumericEditField
+        PlungeLabel                  matlab.ui.control.Label
+        EditField_Trend              matlab.ui.control.NumericEditField
+        TrendLabel                   matlab.ui.control.Label
+        EditField_Fo_ifinal          matlab.ui.control.NumericEditField
+        MgfinalLabel                 matlab.ui.control.Label
+        EditField_Fo_initial         matlab.ui.control.NumericEditField
+        MginitialLabel               matlab.ui.control.Label
+        EditField_break_distance     matlab.ui.control.NumericEditField
+        BreakdistancemicronsLabel    matlab.ui.control.Label
+        EditField_numberpoints       matlab.ui.control.NumericEditField
+        NumberofpointsLabel          matlab.ui.control.Label
+        EditField_fo2_NNO            matlab.ui.control.NumericEditField
+        OxygenfugacitydeltaNNOLabel  matlab.ui.control.Label
+        EditField_temperature_C      matlab.ui.control.NumericEditField
+        EditField_numberiterations   matlab.ui.control.NumericEditField
+        TimeresolutionDropDown       matlab.ui.control.DropDown
+        TemperatureLabel             matlab.ui.control.Label
+        NumberofiterationsLabel      matlab.ui.control.Label
+        TimeresolutionLabel          matlab.ui.control.Label
+        UIAxes_Diff                  matlab.ui.control.UIAxes
+    end
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Button pushed function: StartcalculationButton
+        function StartcalculationButtonPushed(app, event)
+            value = app.TimeresolutionDropDown.Value;
+
+            format long
+            
+            if (value == 1)
+                res = 1; % 1 second resolution
+            elseif (value == 2)
+                res = 60; % 1 minute resolution
+            elseif (value == 3)
+                res = 3600; % 1 hour resolution
+            elseif (value == 4)
+                res = 3600*24; % 1 day resolution
+            elseif (value == 5)
+                res = 3600*24*30; % 1 month resolution
+            elseif (value == 6)
+                res = 3600*24*365; % 1 year resolution
+            elseif (value == 7)
+                res = 3600*24*365*100; % 1 century resolution
+            elseif (value == 8)
+                res = 3600*24*365*1000; % 1 thousand years
+            end
+
+            t = app.EditField_numberiterations.Value; % how many iterations will I perform?
+
+            T = app.EditField_temperature_C.Value; % temperature in celsius
+
+            deltaNNO = app.EditField_fo2_NNO.Value; % oxygen fugacity in delta-NNO
+
+            N_puntos = app.EditField_numberpoints.Value; % Number of points (nodes)
+
+            c = app.EditField_break_distance.Value; % break distance (microns)
+
+            Mg_number_min = app.EditField_Fo_initial.Value;
+
+            %P = app.EditField_Pressure.Value;
+
+            trend = app.EditField_Trend.Value;
+
+            plunge = app.EditField_Plunge.Value;
+
+            angle_traverse = app.EditField_Traverse_angle.Value;
+
+            xxx1 = app.EditField_Minxaxis.Value;
+            
+            xxx2 = app.EditField_Maxxaxis.Value;
+
+            yyy1 = app.EditField_Minyaxis.Value;
+
+            yyy2 = app.EditField_Maxyaxis.Value;
+
+            T_error = app.EditField_temperature_error.Value;
+
+            deltaNNO_error = app.EditField_fo2_error.Value;
+
+            %P_error = app.EditField_pressure_error.Value;
+
+            Modelando = app.DropDown_Timescale_error.Value;
+
+            Mg_number_max = app.EditField_Fo_ifinal.Value;
+
+
+            % Final_profile1 = xlsread('Olivine_distance_composition.xlsx', 'Data', 'A2:B99999');
+
+            read_1 = readtable('Orthopyroxene_distance_composition'); %leer
+            x_datos1 = table2array(read_1(:, "Distance_um")); % transformar los datos de excel a matlab (eje x)
+            y_datos1 = table2array(read_1(:, "Mg_number")); % transformar los datos de excel a matlab (eje y)
+
+            Final_profile1 = [x_datos1 y_datos1];
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            a= max((Final_profile1(:,1))); % profile total distance (micrometers)
+             
+            N_pendientes = length(Final_profile1(:,1))-1;
+            
+            while (mod(N_puntos,N_pendientes) ~= 0)
+                N_puntos = N_puntos-1;
+            end
+            
+            Distancia_total = max(Final_profile1(:,1));
+            
+            Resolution = max(Final_profile1(:,1))/N_puntos;
+            
+            Profile_fake = zeros(N_puntos,2); % Se crea la matriz para llenar el perfil falso
+             
+            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creando el eje x falso
+             
+            Columna_y_fake = zeros(1, N_puntos)'; % Creando el eje y falso
+            
+            Pendiente_x_fake = zeros(1,N_pendientes); % Pendientes para determinar Columna_y_fake
+             
+            Posicion_x_fake = zeros(1,N_pendientes); % Coeficiente de posición para determinar Columna_y_fake
+            
+            % Determinando los valores de las pendientes
+            
+            for i=1:N_pendientes
+                Pendiente_x_fake(i) = (Final_profile1(i+1,2)-Final_profile1(i,2))/...
+                    (Final_profile1(i+1,1)-Final_profile1(i,1));
+            end
+            
+            % Determinando los valores del coeficiente de posición
+            for i=1:N_pendientes
+                Posicion_x_fake(i) = Final_profile1(i,2)-(Final_profile1(i,1)*Pendiente_x_fake(i));
+            end
+            
+            % Creando la Columna_y_fake
+             
+            for i=1:N_pendientes
+                for j=1:(N_puntos/N_pendientes) % Hasta la resolución
+                    Columna_y_fake((i-1)*(N_puntos/N_pendientes)+j) = Columna_x_fake((i-1)*(N_puntos/N_pendientes)+j,1)*Pendiente_x_fake(i) + Posicion_x_fake(i);
+                end
+            end
+            
+            Profile_fake = [Columna_x_fake Columna_y_fake];
+            
+            b=N_puntos;
+            
+            %%%%%%%% Ahora a crear el perfil falso %%%%
+             
+            diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2;
+            
+            for i=1:(length(Profile_fake(:,1)))
+                if (c > (Profile_fake(i,1)- diferencia))
+                    celda_1=i;
+                end
+            end
+
+            Profile_fake = [Columna_x_fake Columna_y_fake];
+            b=N_puntos;
+
+            %%%%%%%% Ahora a crear el perfil falso %%%%
+
+    diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2;
+
+    for i=1:(length(Profile_fake(:,1)))
+        if (c > (Profile_fake(i,1)- diferencia))
+            celda_1=i;
+        end
+    end
+
+    c = celda_1;
+
+
+    distancia1 =  (linspace(0,a,b)); % generating a vector representing distance "a" through "b" points.
+    composicion1 = Mg_number_min.*ones(c,1); % rim composition, first "c" data (rim is going to plotted first).
+    composicion2 = Mg_number_max.*ones(b-c,1); % core composition, until "a" um.
+    composicion12 = [composicion1;composicion2]; % initial composition of the crystal.
+
+    C = zeros(b,t+1); % "b" points with data, (t+1) iterations in time, Composition, C.
+    x = zeros(b,t+1); % % "b" points with data, (t+1) iterations in time, Distance, x.
+
+    C(:,1) = [composicion12]; % Compositions are added to the first column of composition (time, t=1).
+    C(1,:) = [Mg_number_min]; % First point of the rim, constant value. 
+    C(b,:) = [Mg_number_max]; % Last point of the core, constant composition.
+    x(:,1)= [distancia1']; % initial distance: "b" points until "a" micrometers.
+    hour = linspace(0,t, t+1); % vector with times, 1 by 1 counter; total times have to be (t+1).
+
+    T=T+273; %T (K)
+    T1_error = T + T_error; % Temperatura max considerando la incertidumbre
+    T2_error = T - T_error; % Temperatura min considerando la incertidumbre
+
+    R= 8.314472; % universal constant of ideal gases (J/(mol*K))
+
+    f_O_2 = (-24930/T+9.36); % fO2, Huebner & Sato, 1970 NNO
+    fO_2 = (10^(deltaNNO+f_O_2))*100000; % oxigen fugacity: pressure (Pa)
+    fO_2_error1 = (10^(deltaNNO+f_O_2+deltaNNO_error))*100000; % oxigen fugacity: pressure (Pa)
+    fO_2_error1a = (10^(deltaNNO+f_O_2-deltaNNO_error))*100000; % oxigen fugacity: pressure (Pa)
+
+    f_O_2_1 = (-24930/(T1_error)+9.36); % fO2, Huebner & Sato, 1970 NNO
+    f_O_2_2 = (-24930/(T2_error)+9.36); % fO2, Huebner & Sato, 1970 NNO
+    fO_2_error2 = (10^(deltaNNO+f_O_2_1))*100000; % oxigen fugacity: pressure (Pa)
+    fO_2_error2a = (10^(deltaNNO+f_O_2_2))*100000; % oxigen fugacity: pressure (Pa)
+
+    %P= P*10^8; % pressure Pa
+
+
+
+    %%%%% Calculating covariance %%%%%
+             
+            temper = linspace(T - T_error, T + T_error, 20);
+            
+            for i = 1:20
+                fugacidad(i) = (-24930/temper(i) + 9.36 + deltaNNO);
+                fugacidad1(i) = 10^(fugacidad(i));
+                fugacidad2(i) = fugacidad1(i)*10^5;
+            end
+            
+            prom_temper = mean(temper);
+            prom_fugacidad = mean(fugacidad);
+            
+            for i =1:20
+                x_prima(i) = temper(i) - prom_temper;
+                y_prima(i) = fugacidad2(i) - prom_fugacidad;
+                xy_prima(i) = x_prima(i)*y_prima(i);
+            end
+            
+            D_cov_1 = mean(xy_prima) % covariance T, fo_2 value.
+
+
+
+            %%%% crystal orientation %%%%
+            
+            trend_001 = (trend*pi)/180; % sexagesimal to radians
+            plunge_001= (plunge*pi)/180; % sexagesimal to radians
+            angle_traverse_1 = (angle_traverse*pi)/180; % sexagesimal to radians
+            
+            difference_angles = (trend-angle_traverse)*pi/180;
+            
+            aux_x = 1/(tan((pi)-(difference_angles))-1); % calculation of x_1
+            aux_y = tan((pi)-(difference_angles))*aux_x; % calculation of y_1
+            aux_dist = (aux_x^2+aux_y^2)^0.5; % distance
+            aux_z = aux_dist*tan(plunge_001); % calculation of z_1
+            
+            coseno_angle = (abs(aux_x*1+aux_y*0+aux_z*0))/((aux_x^2+aux_y^2+aux_z^2)^0.5);
+            
+            gamma_1 = acos(coseno_angle); % angle of the traverse with respect to the axis c
+            alpha_1 = ((pi/2)-(gamma_1)); % angle of the traverse with respect to the axis a
+            beta_1 = pi/2; % angle of the traverse with respect to the axis b
+             
+            D=0;
+            D1=0;
+            D_error_T = 0;
+            D_error_fO2 = 0;
+            D_error = 0;
+            
+            N_pendientes;
+            
+            Resolution;
+            
+            max_time = ones(t+1,1);
+            
+            counter =0;
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            max_time = ones(t+1,1);
+            counter =0;
+            ccorre=0;
+
+            %%%%%%%%%% Now, it's time to perform calculations 
+            %%%%%%%%%% considering uncertainties %%%%%%%%%%%%%
+
+if (Modelando == 1)
+    for j=1:t+1; % t horas; dependiendo de la resolución!!
+    for i=2:b-1; % para los "b" espacios
+        D = 1.12*10^(-6)*(fO_2)^(0.053)*exp(-(308000)/(R*T))*10^12; %D
+        %D = D + (4.37*10^(-17)); % error fast!!!!!! that's why is "+"
+        %D = (factor/6)*D*10^12;
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+        if D>D1
+            D1=D;
+        else
+            D=D1;
+        end
+    for i=2:b-1; % para los "b" espacios
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+    end
+    end
+
+    %%% Para el error se debe sumar en la línea que viene %%%
+    
+    
+    ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
+    
+    max_time(j+1,1) =(ccorre);
+    
+    if max_time(j+1,1)<max_time(j,1)
+        counter = j+1;
+    else
+        counter = counter;
+    end
+    %[maximum_r,maximum_time] = max(Coef1)
+    
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    
+    end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if (Modelando == 2)
+    for j=1:t+1; % t horas; dependiendo de la resolución!!
+    for i=2:b-1; % para los "b" espacios
+        D_1 = 1.12*10^(-6)*(fO_2)^(0.053)*exp(-(308000)/(R*T))*10^12; %D
+        D_error_T = 1.12*10^(-6)*(fO_2)^(0.053)*exp(-(308000)/(R*(T1_error)))*10^12; % D_error T
+        % D_cov_1 = covariance T, fO_2 calculated before
+        D_error_fO2 = 1.12*10^(-6)*(fO_2_error1)^(0.053)*exp(-(308000)/(R*T))*10^12; % D_error fO_2
+        D_error_1 = 1.12*10^(-6)*(fO_2)^(0.053-0.027)*exp(-(308000)/(R*T))*10^12; %D
+        
+        %D = (factor/6)*D*10^12; % fO_2_er
+        D = D_1 + ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*(D_cov_1/T_error)*D_error_T*(D_error_fO2/fO_2_error1))))^0.5;
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+        if D>D1
+            D1=D;
+        else
+            D=D1;
+        end
+    for i=2:b-1; % para los "b" espacios 
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+    end
+    end
+    
+
+    %%% Para el error se debe sumar en la línea que viene %%%
+    
+    
+    ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
+    
+    max_time(j+1,1) =(ccorre);
+    
+    if max_time(j+1,1)<max_time(j,1)
+        counter = j+1;
+    else
+        counter = counter;
+    end
+    %[maximum_r,maximum_time] = max(Coef1)
+    
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    
+    end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if (Modelando == 3)
+    for j=1:t+1; % t horas; dependiendo de la resolución!!
+    for i=2:b-1; % para los "b" espacios
+        D_1 = 1.12*10^(-6)*(fO_2)^(0.053)*exp(-(308000)/(R*T))*10^12; %D
+        D_error_T = 1.12*10^(-6)*(fO_2)^(0.053)*exp(-(308000)/(R*(T2_error)))*10^12; % D_error T
+        % D_cov_1 = covariance T, fO_2 calculated before
+        D_error_fO2 = 1.12*10^(-6)*(fO_2_error1a)^(0.053)*exp(-(308000)/(R*T))*10^12; % D_error fO_2
+        D_error_1 = 1.12*10^(-6)*(fO_2)^(0.053+0.027)*exp(-(308000)/(R*T))*10^12; %D
+        
+        %D = (factor/6)*D*10^12; % fO_2_er
+        D = D_1 - ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*D_cov_1*(D_error_T/T_error)*(D_error_fO2/fO_2_error1))))^0.5;
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+        if D>D1
+            D1=D;
+        else
+            D=D1;
+        end
+    for i=2:b-1; % para los "b" espacios
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+    end
+    end
+    
+
+    %%% Para el error se debe sumar en la línea que viene %%%
+    
+    
+    ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
+    
+    max_time(j+1,1) =(ccorre);
+    
+    if max_time(j+1,1)<max_time(j,1)
+        counter = j+1;
+    else
+        counter = counter;
+    end
+    %[maximum_r,maximum_time] = max(Coef1)
+    
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    
+    end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+cla(app.UIAxes_Diff, "reset")
+
+plot(app.UIAxes_Diff, x(:,1), C(:,1), '--r','LineWidth',1.5)
+
+hold(app.UIAxes_Diff);
+
+plot(app.UIAxes_Diff, x(:,1), C(:,counter-1),'k','LineWidth',1.5);
+
+plot(app.UIAxes_Diff, Final_profile1(:,1), Final_profile1(:,2), '-ob','LineWidth',1.5);
+
+ylabel(app.UIAxes_Diff,'X_{Fo}')
+
+xlabel(app.UIAxes_Diff, 'Distance (um)')
+
+% set(0,'DefaultAxesFontName', 'Times New Roman') % Directly in appdesigner
+
+axis (app.UIAxes_Diff,[xxx1 xxx2 yyy1 yyy2]);
+
+app.EditField_SSM.Value = num2str(ccorre);
+
+app.EditField_seconds.Value = num2str(((counter-2)*res)); % seconds
+
+app.EditField_minutes.Value = num2str((counter-2)*res/60); % minutes
+
+app.EditField_hours.Value = num2str((counter-2)*res/(3600)); % hours
+
+app.EditField_days.Value = num2str((counter-2)*res/(3600*24)); % days
+
+app. EditField_years.Value = num2str((counter-2)*res/(3600*24*365)); % years
+
+app.EditField_millennia.Value = num2str((counter-2)*res/(3600*24*365*1000)); % millennia
+
+drawnow;
+
+clear
+
+clc
+
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Get the file path for locating images
+            pathToMLAPP = fileparts(mfilename('fullpath'));
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Position = [100 100 1278 670];
+            app.UIFigure.Name = 'MATLAB App';
+
+            % Create UIAxes_Diff
+            app.UIAxes_Diff = uiaxes(app.UIFigure);
+            xlabel(app.UIAxes_Diff, 'X')
+            ylabel(app.UIAxes_Diff, 'Y')
+            zlabel(app.UIAxes_Diff, 'Z')
+            app.UIAxes_Diff.FontName = 'Times New Roman';
+            app.UIAxes_Diff.Position = [398 41 549 438];
+
+            % Create TimeresolutionLabel
+            app.TimeresolutionLabel = uilabel(app.UIFigure);
+            app.TimeresolutionLabel.HorizontalAlignment = 'right';
+            app.TimeresolutionLabel.FontSize = 10;
+            app.TimeresolutionLabel.Position = [76 591 85 22];
+            app.TimeresolutionLabel.Text = 'Time resolution';
+
+            % Create NumberofiterationsLabel
+            app.NumberofiterationsLabel = uilabel(app.UIFigure);
+            app.NumberofiterationsLabel.HorizontalAlignment = 'right';
+            app.NumberofiterationsLabel.FontSize = 10;
+            app.NumberofiterationsLabel.Position = [66 557 95 22];
+            app.NumberofiterationsLabel.Text = 'Number of iterations';
+
+            % Create TemperatureLabel
+            app.TemperatureLabel = uilabel(app.UIFigure);
+            app.TemperatureLabel.HorizontalAlignment = 'right';
+            app.TemperatureLabel.FontSize = 10;
+            app.TemperatureLabel.Position = [100 523 61 22];
+            app.TemperatureLabel.Text = 'Temperature';
+
+            % Create TimeresolutionDropDown
+            app.TimeresolutionDropDown = uidropdown(app.UIFigure);
+            app.TimeresolutionDropDown.Items = {'seconds', 'minutes', 'hours', 'days', 'months', 'years', 'centuries', 'millennia'};
+            app.TimeresolutionDropDown.ItemsData = [1 2 3 4 5 6 7 8];
+            app.TimeresolutionDropDown.FontSize = 10;
+            app.TimeresolutionDropDown.Position = [183 589 111 27];
+            app.TimeresolutionDropDown.Value = 1;
+
+            % Create EditField_numberiterations
+            app.EditField_numberiterations = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_numberiterations.Limits = [1 Inf];
+            app.EditField_numberiterations.HorizontalAlignment = 'center';
+            app.EditField_numberiterations.FontSize = 10;
+            app.EditField_numberiterations.Position = [183 556 111 22];
+            app.EditField_numberiterations.Value = 100;
+
+            % Create EditField_temperature_C
+            app.EditField_temperature_C = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_temperature_C.Limits = [1 Inf];
+            app.EditField_temperature_C.HorizontalAlignment = 'center';
+            app.EditField_temperature_C.FontSize = 10;
+            app.EditField_temperature_C.Position = [183 523 111 22];
+            app.EditField_temperature_C.Value = 1000;
+
+            % Create OxygenfugacitydeltaNNOLabel
+            app.OxygenfugacitydeltaNNOLabel = uilabel(app.UIFigure);
+            app.OxygenfugacitydeltaNNOLabel.HorizontalAlignment = 'right';
+            app.OxygenfugacitydeltaNNOLabel.FontSize = 10;
+            app.OxygenfugacitydeltaNNOLabel.Position = [28 490 133 22];
+            app.OxygenfugacitydeltaNNOLabel.Text = 'Oxygen fugacity (delta-NNO)';
+
+            % Create EditField_fo2_NNO
+            app.EditField_fo2_NNO = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_fo2_NNO.HorizontalAlignment = 'center';
+            app.EditField_fo2_NNO.FontSize = 10;
+            app.EditField_fo2_NNO.Position = [183 490 111 22];
+            app.EditField_fo2_NNO.Value = 0.5;
+
+            % Create NumberofpointsLabel
+            app.NumberofpointsLabel = uilabel(app.UIFigure);
+            app.NumberofpointsLabel.HorizontalAlignment = 'right';
+            app.NumberofpointsLabel.FontSize = 10;
+            app.NumberofpointsLabel.Position = [80 457 81 22];
+            app.NumberofpointsLabel.Text = 'Number of points';
+
+            % Create EditField_numberpoints
+            app.EditField_numberpoints = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_numberpoints.Limits = [3 Inf];
+            app.EditField_numberpoints.HorizontalAlignment = 'center';
+            app.EditField_numberpoints.FontSize = 10;
+            app.EditField_numberpoints.Position = [183 457 111 22];
+            app.EditField_numberpoints.Value = 100;
+
+            % Create BreakdistancemicronsLabel
+            app.BreakdistancemicronsLabel = uilabel(app.UIFigure);
+            app.BreakdistancemicronsLabel.HorizontalAlignment = 'right';
+            app.BreakdistancemicronsLabel.FontSize = 10;
+            app.BreakdistancemicronsLabel.Position = [45 424 116 22];
+            app.BreakdistancemicronsLabel.Text = 'Break distance (microns)';
+
+            % Create EditField_break_distance
+            app.EditField_break_distance = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_break_distance.Limits = [0 Inf];
+            app.EditField_break_distance.HorizontalAlignment = 'center';
+            app.EditField_break_distance.FontSize = 10;
+            app.EditField_break_distance.Position = [183 424 111 22];
+
+            % Create MginitialLabel
+            app.MginitialLabel = uilabel(app.UIFigure);
+            app.MginitialLabel.HorizontalAlignment = 'right';
+            app.MginitialLabel.FontSize = 10;
+            app.MginitialLabel.Position = [111 391 50 22];
+            app.MginitialLabel.Text = 'Mg# initial';
+
+            % Create EditField_Fo_initial
+            app.EditField_Fo_initial = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Fo_initial.Limits = [0 Inf];
+            app.EditField_Fo_initial.HorizontalAlignment = 'center';
+            app.EditField_Fo_initial.FontSize = 10;
+            app.EditField_Fo_initial.Position = [183 391 111 22];
+            app.EditField_Fo_initial.Value = 0.8887;
+
+            % Create MgfinalLabel
+            app.MgfinalLabel = uilabel(app.UIFigure);
+            app.MgfinalLabel.HorizontalAlignment = 'right';
+            app.MgfinalLabel.FontSize = 10;
+            app.MgfinalLabel.Position = [115 358 46 22];
+            app.MgfinalLabel.Text = 'Mg# final';
+
+            % Create EditField_Fo_ifinal
+            app.EditField_Fo_ifinal = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Fo_ifinal.Limits = [0 Inf];
+            app.EditField_Fo_ifinal.HorizontalAlignment = 'center';
+            app.EditField_Fo_ifinal.FontSize = 10;
+            app.EditField_Fo_ifinal.Position = [183 358 111 22];
+            app.EditField_Fo_ifinal.Value = 0.8368;
+
+            % Create TrendLabel
+            app.TrendLabel = uilabel(app.UIFigure);
+            app.TrendLabel.HorizontalAlignment = 'right';
+            app.TrendLabel.FontSize = 10;
+            app.TrendLabel.Position = [105 292 56 22];
+            app.TrendLabel.Text = '[001] Trend';
+
+            % Create EditField_Trend
+            app.EditField_Trend = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Trend.HorizontalAlignment = 'center';
+            app.EditField_Trend.FontSize = 10;
+            app.EditField_Trend.Position = [183 292 111 22];
+            app.EditField_Trend.Value = 90;
+
+            % Create PlungeLabel
+            app.PlungeLabel = uilabel(app.UIFigure);
+            app.PlungeLabel.HorizontalAlignment = 'right';
+            app.PlungeLabel.FontSize = 10;
+            app.PlungeLabel.Position = [100 259 61 22];
+            app.PlungeLabel.Text = '[001] Plunge';
+
+            % Create EditField_Plunge
+            app.EditField_Plunge = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Plunge.HorizontalAlignment = 'center';
+            app.EditField_Plunge.FontSize = 10;
+            app.EditField_Plunge.Position = [183 259 111 22];
+
+            % Create TraverseangleLabel
+            app.TraverseangleLabel = uilabel(app.UIFigure);
+            app.TraverseangleLabel.HorizontalAlignment = 'right';
+            app.TraverseangleLabel.FontSize = 10;
+            app.TraverseangleLabel.Position = [90 226 71 22];
+            app.TraverseangleLabel.Text = 'Traverse angle';
+
+            % Create EditField_Traverse_angle
+            app.EditField_Traverse_angle = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Traverse_angle.HorizontalAlignment = 'center';
+            app.EditField_Traverse_angle.FontSize = 10;
+            app.EditField_Traverse_angle.Position = [183 226 111 22];
+            app.EditField_Traverse_angle.Value = 50;
+
+            % Create MinxaxisLabel
+            app.MinxaxisLabel = uilabel(app.UIFigure);
+            app.MinxaxisLabel.HorizontalAlignment = 'right';
+            app.MinxaxisLabel.FontSize = 10;
+            app.MinxaxisLabel.Position = [111 193 50 22];
+            app.MinxaxisLabel.Text = 'Min x-axis';
+
+            % Create EditField_Minxaxis
+            app.EditField_Minxaxis = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Minxaxis.HorizontalAlignment = 'center';
+            app.EditField_Minxaxis.FontSize = 10;
+            app.EditField_Minxaxis.Position = [183 193 111 22];
+            app.EditField_Minxaxis.Value = -5;
+
+            % Create MaxxaxisLabel
+            app.MaxxaxisLabel = uilabel(app.UIFigure);
+            app.MaxxaxisLabel.HorizontalAlignment = 'right';
+            app.MaxxaxisLabel.FontSize = 10;
+            app.MaxxaxisLabel.Position = [108 160 53 22];
+            app.MaxxaxisLabel.Text = 'Max x-axis';
+
+            % Create EditField_Maxxaxis
+            app.EditField_Maxxaxis = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Maxxaxis.HorizontalAlignment = 'center';
+            app.EditField_Maxxaxis.FontSize = 10;
+            app.EditField_Maxxaxis.Position = [183 160 111 22];
+            app.EditField_Maxxaxis.Value = 30;
+
+            % Create MinyaxisLabel
+            app.MinyaxisLabel = uilabel(app.UIFigure);
+            app.MinyaxisLabel.HorizontalAlignment = 'right';
+            app.MinyaxisLabel.FontSize = 10;
+            app.MinyaxisLabel.Position = [111 127 50 22];
+            app.MinyaxisLabel.Text = 'Min y-axis';
+
+            % Create EditField_Minyaxis
+            app.EditField_Minyaxis = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Minyaxis.Limits = [0 Inf];
+            app.EditField_Minyaxis.HorizontalAlignment = 'center';
+            app.EditField_Minyaxis.FontSize = 10;
+            app.EditField_Minyaxis.Position = [183 127 111 22];
+            app.EditField_Minyaxis.Value = 0.81;
+
+            % Create MaxyaxisLabel
+            app.MaxyaxisLabel = uilabel(app.UIFigure);
+            app.MaxyaxisLabel.HorizontalAlignment = 'right';
+            app.MaxyaxisLabel.FontSize = 10;
+            app.MaxyaxisLabel.Position = [108 94 53 22];
+            app.MaxyaxisLabel.Text = 'Max y-axis';
+
+            % Create EditField_Maxyaxis
+            app.EditField_Maxyaxis = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_Maxyaxis.Limits = [0 Inf];
+            app.EditField_Maxyaxis.HorizontalAlignment = 'center';
+            app.EditField_Maxyaxis.FontSize = 10;
+            app.EditField_Maxyaxis.Position = [183 94 111 22];
+            app.EditField_Maxyaxis.Value = 0.91;
+
+            % Create Label
+            app.Label = uilabel(app.UIFigure);
+            app.Label.HorizontalAlignment = 'center';
+            app.Label.FontSize = 10;
+            app.Label.Position = [299 523 22 22];
+            app.Label.Text = '+/-';
+
+            % Create Label_2
+            app.Label_2 = uilabel(app.UIFigure);
+            app.Label_2.HorizontalAlignment = 'center';
+            app.Label_2.FontSize = 10;
+            app.Label_2.Position = [300 490 22 22];
+            app.Label_2.Text = '+/-';
+
+            % Create DiffSimOrthopyroxeneLabel
+            app.DiffSimOrthopyroxeneLabel = uilabel(app.UIFigure);
+            app.DiffSimOrthopyroxeneLabel.HorizontalAlignment = 'center';
+            app.DiffSimOrthopyroxeneLabel.FontSize = 14;
+            app.DiffSimOrthopyroxeneLabel.Position = [530 632 150 22];
+            app.DiffSimOrthopyroxeneLabel.Text = 'DiffSim: Orthopyroxene';
+
+            % Create EditField_temperature_error
+            app.EditField_temperature_error = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_temperature_error.Limits = [0 Inf];
+            app.EditField_temperature_error.HorizontalAlignment = 'center';
+            app.EditField_temperature_error.FontSize = 10;
+            app.EditField_temperature_error.Position = [326 523 36 22];
+            app.EditField_temperature_error.Value = 22;
+
+            % Create EditField_fo2_error
+            app.EditField_fo2_error = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_fo2_error.Limits = [0 Inf];
+            app.EditField_fo2_error.HorizontalAlignment = 'center';
+            app.EditField_fo2_error.FontSize = 10;
+            app.EditField_fo2_error.Position = [326 490 36 22];
+            app.EditField_fo2_error.Value = 0.1;
+
+            % Create CalculateLabel
+            app.CalculateLabel = uilabel(app.UIFigure);
+            app.CalculateLabel.HorizontalAlignment = 'right';
+            app.CalculateLabel.FontSize = 10;
+            app.CalculateLabel.Position = [409 592 85 22];
+            app.CalculateLabel.Text = 'Calculate';
+
+            % Create DropDown_Timescale_error
+            app.DropDown_Timescale_error = uidropdown(app.UIFigure);
+            app.DropDown_Timescale_error.Items = {'Timescale', 'Minimum time', 'Maximum time'};
+            app.DropDown_Timescale_error.ItemsData = [1 2 3];
+            app.DropDown_Timescale_error.FontSize = 10;
+            app.DropDown_Timescale_error.Position = [525 591 152 25];
+            app.DropDown_Timescale_error.Value = 1;
+
+            % Create LeastsquarebestfittingLabel
+            app.LeastsquarebestfittingLabel = uilabel(app.UIFigure);
+            app.LeastsquarebestfittingLabel.HorizontalAlignment = 'right';
+            app.LeastsquarebestfittingLabel.FontSize = 10;
+            app.LeastsquarebestfittingLabel.Position = [383 557 112 22];
+            app.LeastsquarebestfittingLabel.Text = 'Least-square best fitting';
+
+            % Create EditField_SSM
+            app.EditField_SSM = uieditfield(app.UIFigure, 'text');
+            app.EditField_SSM.Editable = 'off';
+            app.EditField_SSM.BackgroundColor = [1 1 0];
+            app.EditField_SSM.Position = [526 556 151 24];
+
+            % Create Image
+            app.Image = uiimage(app.UIFigure);
+            app.Image.Position = [986 513 245 129];
+            app.Image.ImageSource = fullfile(pathToMLAPP, 'DiffSim_start_opx.png');
+
+            % Create Image2
+            app.Image2 = uiimage(app.UIFigure);
+            app.Image2.Position = [986 71 245 134];
+            app.Image2.ImageSource = fullfile(pathToMLAPP, 'Image_legend.png');
+
+            % Create EditField_seconds
+            app.EditField_seconds = uieditfield(app.UIFigure, 'text');
+            app.EditField_seconds.Editable = 'off';
+            app.EditField_seconds.HorizontalAlignment = 'center';
+            app.EditField_seconds.BackgroundColor = [1 1 0];
+            app.EditField_seconds.Position = [990 447 151 24];
+
+            % Create EditField_minutes
+            app.EditField_minutes = uieditfield(app.UIFigure, 'text');
+            app.EditField_minutes.Editable = 'off';
+            app.EditField_minutes.HorizontalAlignment = 'center';
+            app.EditField_minutes.BackgroundColor = [1 1 0];
+            app.EditField_minutes.Position = [990 402 151 24];
+
+            % Create EditField_hours
+            app.EditField_hours = uieditfield(app.UIFigure, 'text');
+            app.EditField_hours.Editable = 'off';
+            app.EditField_hours.HorizontalAlignment = 'center';
+            app.EditField_hours.BackgroundColor = [1 1 0];
+            app.EditField_hours.Position = [990 357 151 24];
+
+            % Create EditField_days
+            app.EditField_days = uieditfield(app.UIFigure, 'text');
+            app.EditField_days.Editable = 'off';
+            app.EditField_days.HorizontalAlignment = 'center';
+            app.EditField_days.BackgroundColor = [1 1 0];
+            app.EditField_days.Position = [990 313 151 24];
+
+            % Create EditField_years
+            app.EditField_years = uieditfield(app.UIFigure, 'text');
+            app.EditField_years.Editable = 'off';
+            app.EditField_years.HorizontalAlignment = 'center';
+            app.EditField_years.BackgroundColor = [1 1 0];
+            app.EditField_years.Position = [990 269 151 24];
+
+            % Create EditField_millennia
+            app.EditField_millennia = uieditfield(app.UIFigure, 'text');
+            app.EditField_millennia.Editable = 'off';
+            app.EditField_millennia.HorizontalAlignment = 'center';
+            app.EditField_millennia.BackgroundColor = [1 1 0];
+            app.EditField_millennia.Position = [990 225 151 24];
+
+            % Create secondsLabel
+            app.secondsLabel = uilabel(app.UIFigure);
+            app.secondsLabel.FontSize = 10;
+            app.secondsLabel.Position = [1158 448 85 22];
+            app.secondsLabel.Text = 'seconds';
+
+            % Create minutesLabel
+            app.minutesLabel = uilabel(app.UIFigure);
+            app.minutesLabel.FontSize = 10;
+            app.minutesLabel.Position = [1158 403 85 22];
+            app.minutesLabel.Text = 'minutes';
+
+            % Create hoursLabel
+            app.hoursLabel = uilabel(app.UIFigure);
+            app.hoursLabel.FontSize = 10;
+            app.hoursLabel.Position = [1158 358 85 22];
+            app.hoursLabel.Text = 'hours';
+
+            % Create daysLabel
+            app.daysLabel = uilabel(app.UIFigure);
+            app.daysLabel.FontSize = 10;
+            app.daysLabel.Position = [1158 314 85 22];
+            app.daysLabel.Text = 'days';
+
+            % Create yearsLabel
+            app.yearsLabel = uilabel(app.UIFigure);
+            app.yearsLabel.FontSize = 10;
+            app.yearsLabel.Position = [1158 270 85 22];
+            app.yearsLabel.Text = 'years';
+
+            % Create milleniaLabel
+            app.milleniaLabel = uilabel(app.UIFigure);
+            app.milleniaLabel.FontSize = 10;
+            app.milleniaLabel.Position = [1158 226 85 22];
+            app.milleniaLabel.Text = 'millenia';
+
+            % Create StartcalculationButton
+            app.StartcalculationButton = uibutton(app.UIFigure, 'push');
+            app.StartcalculationButton.ButtonPushedFcn = createCallbackFcn(app, @StartcalculationButtonPushed, true);
+            app.StartcalculationButton.BackgroundColor = [0 1 0];
+            app.StartcalculationButton.Position = [548 502 278 23];
+            app.StartcalculationButton.Text = 'Start calculation';
+
+            % Create InitialprofileLabel
+            app.InitialprofileLabel = uilabel(app.UIFigure);
+            app.InitialprofileLabel.Position = [1090 160 79 22];
+            app.InitialprofileLabel.Text = 'Initial profile';
+
+            % Create MeasuredprofileLabel
+            app.MeasuredprofileLabel = uilabel(app.UIFigure);
+            app.MeasuredprofileLabel.Position = [1090 126 94 22];
+            app.MeasuredprofileLabel.Text = 'Measured profile';
+
+            % Create CalculatedprofileLabel
+            app.CalculatedprofileLabel = uilabel(app.UIFigure);
+            app.CalculatedprofileLabel.Position = [1090 95 98 22];
+            app.CalculatedprofileLabel.Text = 'Calculated profile';
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = DiffSim_Orthopyroxene
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
