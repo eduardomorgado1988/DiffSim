@@ -493,7 +493,7 @@ if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
         else
             D=D1;
         end
-    for i=2:b-1; % para los "b" espacios
+    for i=2:b-1; % calculation for "b" spaces
         C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     end
@@ -535,7 +535,7 @@ if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
         else
             D=D1;
         end
-    for i=2:b-1; % para los "b" espacios
+    for i=2:b-1; % calculation for "b" spaces
         C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     end
