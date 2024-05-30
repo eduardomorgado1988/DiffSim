@@ -354,7 +354,7 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
             x(:,1)= [distancia1']; % initial distance: "b" points until "a" micrometers.
             hour = linspace(0,t, t+1); % vector with times, 1 by 1 counter; total times have to be (t+1).
 
-            %%%%%%% CONDICIONES INTENSIVAS Y ERRORES %%%%%%%%%%%
+            %%%%%%% INTENSIVE CONDITIONS AND UNCERTAINTIES %%%%%%%%%%%
 
             T=T+273; % T (K)
             % The uncertainty of the temperature is "T_error"
