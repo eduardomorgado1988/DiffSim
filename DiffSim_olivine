@@ -292,9 +292,9 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
             
             Profile_fake = zeros(N_puntos,2); % to create a matrix to fill the "fake" profile
              
-            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creanting the axis x (fake)
+            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creating the axis x (fake)
              
-            Columna_y_fake = zeros(1, N_puntos)'; % Creanting the axis y (fake)
+            Columna_y_fake = zeros(1, N_puntos)'; % Creating the axis y (fake)
             
             Pendiente_x_fake = zeros(1,N_pendientes); % Slopes to determine "Columna_y_fake"
              
