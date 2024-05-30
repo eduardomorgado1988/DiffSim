@@ -237,82 +237,83 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
 
             c = app.EditField_break_distance.Value; % break distance (microns)
 
-            Fomin = app.EditField_Fo_initial.Value;
+            Fomin = app.EditField_Fo_initial.Value; % Fo at the beginning of the profile
 
-            P = app.EditField_Pressure.Value;
+            P = app.EditField_Pressure.Value; % Pressure (kbar)
 
-            trend = app.EditField_Trend.Value;
+            trend = app.EditField_Trend.Value; % Trend of the axis [001]
 
-            plunge = app.EditField_Plunge.Value;
+            plunge = app.EditField_Plunge.Value; % Plunge of the axis [001]
 
-            angle_traverse = app.EditField_Traverse_angle.Value;
+            angle_traverse = app.EditField_Traverse_angle.Value; % Angle of the traverse measured
 
-            xxx1 = app.EditField_Minxaxis.Value;
+            xxx1 = app.EditField_Minxaxis.Value; % Minimum in axis x
             
-            xxx2 = app.EditField_Maxxaxis.Value;
+            xxx2 = app.EditField_Maxxaxis.Value; % Maximum in axis x
 
-            yyy1 = app.EditField_Minyaxis.Value;
+            yyy1 = app.EditField_Minyaxis.Value; % Minimum in axis y
 
-            yyy2 = app.EditField_Maxyaxis.Value;
+            yyy2 = app.EditField_Maxyaxis.Value; % Maximum in axis y
 
-            T_error = app.EditField_temperature_error.Value;
+            T_error = app.EditField_temperature_error.Value; % Uncertainty of T
 
-            deltaNNO_error = app.EditField_fo2_error.Value;
+            deltaNNO_error = app.EditField_fo2_error.Value; % Uncertainty of fO2 buffer
 
-            P_error = app.EditField_pressure_error.Value;
+            P_error = app.EditField_pressure_error.Value; % Uncertainty of P
 
-            Modelando = app.DropDown_Timescale_error.Value;
+            Modelando = app.DropDown_Timescale_error.Value; % Timescale? Minimum timescale? Maximum timescale?
 
-            Fomax = app.EditField_Fo_ifinal.Value;
+            Fomax = app.EditField_Fo_ifinal.Value; % Fo at the end of the profile
             
 
 
 
-            % Final_profile1 = xlsread('Olivine_distance_composition.xlsx', 'Data', 'A2:B99999');
+            % Final_profile1 = xlsread('Olivine_distance_composition.xlsx', 'Data', 'A2:B99999'); % Measured (natural) profile
 
-            read_1 = readtable('Olivine_distance_composition'); %leer
-            x_datos1 = table2array(read_1(:, "Distance_um")); % transformar los datos de excel a matlab (eje x)
-            y_datos1 = table2array(read_1(:, "XFo")); % transformar los datos de excel a matlab (eje y)
+            read_1 = readtable('Olivine_distance_composition'); % to read the data from the spreadsheet
+            x_datos1 = table2array(read_1(:, "Distance_um")); % to convert data from excel to matlab (axis x)
+            y_datos1 = table2array(read_1(:, "XFo")); % to convert data from excel to matlab (axis y)
 
-            Final_profile1 = [x_datos1 y_datos1];
+            Final_profile1 = [x_datos1 y_datos1]; % Profile from spreadsheet to matlab
 
             
             
             a= max((Final_profile1(:,1))); % profile total distance (micrometers)
              
-            N_pendientes = length(Final_profile1(:,1))-1;
+            N_pendientes = length(Final_profile1(:,1))-1; % number of slopes (to create a final profile of more points than actually measured)
             
-            while (mod(N_puntos,N_pendientes) ~= 0)
+            while (mod(N_puntos,N_pendientes) ~= 0) % the number of slopes to model has to be multiple of the measured points (fake profile)
                 N_puntos = N_puntos-1;
             end
             
-            Distancia_total = max(Final_profile1(:,1));
+            Distancia_total = max(Final_profile1(:,1)); % total distance of the profile
             
-            Resolution = max(Final_profile1(:,1))/N_puntos;
+            Resolution = max(Final_profile1(:,1))/N_puntos; % resolution of the modeled profile
             
-            Profile_fake = zeros(N_puntos,2); % Se crea la matriz para llenar el perfil falso
+            Profile_fake = zeros(N_puntos,2); % to create a matrix to fill the "fake" profile
              
-            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creando el eje x falso
+            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creanting the axis x (fake)
              
-            Columna_y_fake = zeros(1, N_puntos)'; % Creando el eje y falso
+            Columna_y_fake = zeros(1, N_puntos)'; % Creanting the axis y (fake)
             
-            Pendiente_x_fake = zeros(1,N_pendientes); % Pendientes para determinar Columna_y_fake
+            Pendiente_x_fake = zeros(1,N_pendientes); % Slopes to determine "Columna_y_fake"
              
-            Posicion_x_fake = zeros(1,N_pendientes); % Coeficiente de posición para determinar Columna_y_fake
+            Posicion_x_fake = zeros(1,N_pendientes); % Position coefficient to determine "Columna_y_fake"
             
-            % Determinando los valores de las pendientes
+            % Determining the values of the slopes
             
             for i=1:N_pendientes
                 Pendiente_x_fake(i) = (Final_profile1(i+1,2)-Final_profile1(i,2))/...
                     (Final_profile1(i+1,1)-Final_profile1(i,1));
             end
             
-            % Determinando los valores del coeficiente de posición
+            % Determining the values of the position coefficient
+
             for i=1:N_pendientes
                 Posicion_x_fake(i) = Final_profile1(i,2)-(Final_profile1(i,1)*Pendiente_x_fake(i));
             end
             
-            % Creando la Columna_y_fake
+            % Creating the column "Columna_y_fake"
              
             for i=1:N_pendientes
                 for j=1:(N_puntos/N_pendientes) % Hasta la resolución
@@ -320,14 +321,16 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
                 end
             end
             
-            Profile_fake = [Columna_x_fake Columna_y_fake];
+            Profile_fake = [Columna_x_fake Columna_y_fake]; % That is the total fake profile based on the measured data.
             
             b=N_puntos;
             
-            %%%%%%%% Ahora a crear el perfil falso %%%%
+            %%%%%%%% Now we are going to create the initial fake profile (with the same number of elements as the measured fake profile) %%%%%%%
              
-            diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2;
-            
+            diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2; % the resolution of the profiles to work (fakes)
+
+            % To create the first part of the profile (initial profile), first, we count the node the profile changes its composition (celda_1)
+
             for i=1:(length(Profile_fake(:,1)))
                 if (c > (Profile_fake(i,1)- diferencia))
                     celda_1=i;
@@ -353,20 +356,20 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
 
             %%%%%%% CONDICIONES INTENSIVAS Y ERRORES %%%%%%%%%%%
 
-            T=T+273; %T (K) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % El error en la temperatura es "T_error"
+            T=T+273; % T (K)
+            % The uncertainty of the temperature is "T_error"
             R= 8.314472; % universal constant of ideal gases (J/(mol*K))
             f_O_2 = (-24930/T+9.36); % log10(fO2), atm, Huebner & Sato, 1970 NNO
             f_O_2_er = (-24930/T+9.36+deltaNNO_error+deltaNNO); % log10(fO2), atm, valor del error max
             f_O_2_er1 = (-24930/T+9.36-deltaNNO_error+deltaNNO); % log10(fO2), atm, valor del error min
-            f_O_2_er_T = (-24930/(T+T_error)+9.36);
-            f_O_2_er_T1 = (-24930/(T-T_error)+9.36);
+            f_O_2_er_T = (-24930/(T+T_error)+9.36); % Uncertainty of the fO2 buffer at higher temperature
+            f_O_2_er_T1 = (-24930/(T-T_error)+9.36); % Uncertainty of the fO2 buffer at lower temperature
             fO_2 = 10^(deltaNNO+f_O_2)*100000; % oxygen fugacity: pressure (Pa) %%%%%%%%%%%%%%%
             fO_2_er = 10^(f_O_2_er)*100000; % oxygen fugacity error: pressure (Pa) max
             fO_2_er1 = 10^(f_O_2_er1)*100000; % oxygen fugacity error: pressure (Pa) max
-            % El error en la fO_2 es "fO_2_er"
-            fO_2_er_T = 10^(f_O_2_er_T)*100000; % max value
-            fO_2_er_T1 = 10^(f_O_2_er_T1)*100000; % min value
+            % The uncertainty of the fO2 is "fO_2_er"
+            fO_2_er_T = 10^(f_O_2_er_T)*100000; % max value of the fO2 (absolute value)
+            fO_2_er_T1 = 10^(f_O_2_er_T1)*100000; % min value of the fO2 (absolute value)
             P = P*10^8; % pressure Pa
             P_error = P_error*10^8; % pressure Pa
             % El error de la presión es "P_error"
@@ -374,7 +377,7 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
 
             %%%%% Calculating covariance %%%%%
              
-            temper = linspace(T - T_error, T + T_error, 20);
+            temper = linspace(T - T_error, T + T_error, 20); % covariance in the interval of interest 
             
             for i = 1:20
                 fugacidad(i) = (-24930/temper(i) + 9.36 + deltaNNO);
@@ -382,13 +385,13 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
                 fugacidad2(i) = fugacidad1(i)*10^5;
             end
             
-            prom_temper = mean(temper);
-            prom_fugacidad = mean(fugacidad);
+            prom_temper = mean(temper); % mean of T
+            prom_fugacidad = mean(fugacidad); % mean of fO2
             
             for i =1:20
-                x_prima(i) = temper(i) - prom_temper;
-                y_prima(i) = fugacidad2(i) - prom_fugacidad;
-                xy_prima(i) = x_prima(i)*y_prima(i);
+                x_prima(i) = temper(i) - prom_temper; % T - average T
+                y_prima(i) = fugacidad2(i) - prom_fugacidad; % fO2 - average_fO2
+                xy_prima(i) = x_prima(i)*y_prima(i); % covariance
             end
             
             D_cov_1 = mean(xy_prima) % covariance T, fo_2 value.
@@ -399,7 +402,7 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
             plunge_001= (plunge*pi)/180; % sexagesimal to radians
             angle_traverse_1 = (angle_traverse*pi)/180; % sexagesimal to radians
             
-            difference_angles = (trend-angle_traverse)*pi/180;
+            difference_angles = (trend-angle_traverse)*pi/180; % sexagesimal to radians
             
             aux_x = 1/(tan((pi)-(difference_angles))-1); % calculation of x_1
             aux_y = tan((pi)-(difference_angles))*aux_x; % calculation of y_1
@@ -435,20 +438,20 @@ classdef DiffSim_Olivine < matlab.apps.AppBase
             %%%%%%%%%% Now, it's time to perform calculations 
             %%%%%%%%%% considering uncertainties %%%%%%%%%%%%%
 
-if (Modelando == 1)
-    for j=1:t+1; % t horas; dependiendo de la resolución!!
-    for i=2:b-1; % para los "b" espacios
-        D = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); %D
-        %D = D + (4.37*10^(-17)); % error fast!!!!!! that's why is "+"
-        %D = (factor/6)*D*10^12;
-        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+if (Modelando == 1) % Timescale calculation no uncertainties!
+    for j=1:t+1; % t hours; depending on the resolution!!
+    for i=2:b-1; % for "b" spaces (the initial point (i=1) and final point (i=b) do not change)
+        D = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D calculation (Dohmen & Chakraborty, 2007) 
+        % Comment: D = D + (4.37*10^(-17)); % error fast!!!!!! that's why is "+" % In this case we do not consider uncertainties
+        % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation)
         if D>D1
             D1=D;
         else
             D=D1;
         end
-    for i=2:b-1; % para los "b" espacios
-        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+    for i=2:b-1; % calculation for "b" spaces
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     end
 
@@ -464,39 +467,38 @@ if (Modelando == 1)
     else
         counter = counter;
     end
-    %[maximum_r,maximum_time] = max(Coef1)
+    % [maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    % r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % only for the case of GUI.
     
     end
 end
 
 
 
-if (Modelando == 2)
-    for j=1:t+1; % t horas; dependiendo de la resolución!!
-    for i=2:b-1; % para los "b" espacios
-        D_1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); %D
-        D_error_T = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T+T_error)))*(10^12);
+if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
+    for j=1:t+1; % t hours; depending on the resolution!!
+    for i=2:b-1; % for "b" spaces (the initial point (i=1) and final point (i=b) do not change)
+        D_1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D calculation (Dohmen & Chakraborty, 2007)
+        D_error_T = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T+T_error)))*(10^12); % D error related to T
         %D_cov_1 = covariance T, fO_2 calculated before
-        D_error_fO2 = 10^(-9.21)*((fO_2_er)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T)))*(10^12);
-        D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P+P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12);
-        D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000-8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); %D
-        %D = (factor/6)*D*10^12; % fO_2_er
-        D = D_1 + ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T/T_error)*D_cov_1*(D_error_fO2/f_O_2_er))))^0.5;
-        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+        D_error_fO2 = 10^(-9.21)*((fO_2_er)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to fO2
+        D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P+P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to P
+        D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000-8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D error related to experiments
+        % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
+        D = D_1 + ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T/T_error)*D_cov_1*(D_error_fO2/f_O_2_er))))^0.5; % Total error propagation
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
         else
             D=D1;
         end
     for i=2:b-1; % para los "b" espacios
-        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     end
     
-
-    %%% Para el error se debe sumar en la línea que viene %%%
+    %%% For the error, it has to sum the next line %%%
     
     
     ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
@@ -510,35 +512,35 @@ if (Modelando == 2)
     end
     %[maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only for the case of GUI.
     
     end
 end
 
 
-if (Modelando == 3)
-    for j=1:t+1; % t horas; dependiendo de la resolución!!
-    for i=2:b-1; % para los "b" espacios
-        D_1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); %D
-        D_error_T = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T-T_error)))*(10^12);
+if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
+    for j=1:t+1; % t hours; depending on the resolution!!
+    for i=2:b-1; % for "b" spaces (the initial point (i=1) and final point (i=b) do not change)
+        D_1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D calculation (Dohmen & Chakraborty, 2007)
+        D_error_T = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T-T_error)))*(10^12); % D error related to T
         % D_cov_1 = covariance T, fO_2 calculated before
-        D_error_fO2 = 10^(-9.21)*((fO_2_er1)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T)))*(10^12);
-        D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P-P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12);
-        D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000+8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); %D
-        %D = (factor/6)*D*10^12; % fO_2_er
-        D = D_1 - ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T/T_error)*D_cov_1*(D_error_fO2/f_O_2_er))))^0.5;
-        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2);
+        D_error_fO2 = 10^(-9.21)*((fO_2_er1)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+(P-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to fO2
+        D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P-P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to P
+        D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000+8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D error related to experiments
+        % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
+        D = D_1 - ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T/T_error)*D_cov_1*(D_error_fO2/f_O_2_er))))^0.5; % Total error propagation
+        D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
         else
             D=D1;
         end
     for i=2:b-1; % para los "b" espacios
-        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+        C(i,j+1) = C(i,j) + D1*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     end
 
-    %%% Para el error se debe sumar en la línea que viene %%%
+    %%% For the error, it has to sum the next line %%%
     
     
     ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
@@ -552,11 +554,12 @@ if (Modelando == 3)
     end
     %[maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only fo the case of GUI.
     
     end
 end
 
+% The script will create the figure for the freeware %
 
 cla(app.UIAxes_Diff, "reset")
 
