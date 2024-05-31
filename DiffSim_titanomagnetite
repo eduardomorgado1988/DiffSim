@@ -219,73 +219,74 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
 
             c = app.EditField_break_distance.Value; % break distance (microns)
 
-            Timin = app.EditField_Ti_initial.Value;
+            Timin = app.EditField_Ti_initial.Value; % XTi at the beginning of the profile
 
-            Timax = app.EditField_Ti_final.Value;
+            Timax = app.EditField_Ti_final.Value; % XTi at the end of the profile
 
-            Xusp = app.EditField_Xusp.Value;
+            Xusp = app.EditField_Xusp.Value; % Maximum X_ulvospinel composition
 
-            xxx1 = app.EditField_Minxaxis.Value;
+            xxx1 = app.EditField_Minxaxis.Value; % Minimum in axis x
             
-            xxx2 = app.EditField_Maxxaxis.Value;
+            xxx2 = app.EditField_Maxxaxis.Value; % Maximum in axis x
 
-            yyy1 = app.EditField_Minyaxis.Value;
+            yyy1 = app.EditField_Minyaxis.Value; % Minimum in axis y
 
-            yyy2 = app.EditField_Maxyaxis.Value;
+            yyy2 = app.EditField_Maxyaxis.Value; % Maximum in axis y
             
-            T_error = app.EditField_temperature_error.Value;
+            T_error = app.EditField_temperature_error.Value; % Uncertainty of T
 
-            deltaNNO_error = app.EditField_fo2_error.Value;
+            deltaNNO_error = app.EditField_fo2_error.Value; % Uncertainty of fO2 buffer
             
-            Xusp_error = app.EditField_Xusp_error.Value;
+            Xusp_error = app.EditField_Xusp_error.Value; % Uncertainty of the composition
             
-            Modelando = app.DropDown_Timescale_error.Value;
+            Modelando = app.DropDown_Timescale_error.Value; % Timescale? Minimum timescale? Maximum timescale?
 
-            %Final_profile1 = xlsread('Timgt_distance_composition.xlsx', 'Data', 'A2:B99999');
+            %Final_profile1 = xlsread('Timgt_distance_composition.xlsx', 'Data', 'A2:B99999');  % Measured (natural) profile
 
-            read_1 = readtable('Timgt_distance_composition'); %leer
-            x_datos1 = table2array(read_1(:, "Distance_um")); % transformar los datos de excel a matlab (eje x)
-            y_datos1 = table2array(read_1(:, "XTi")); % transformar los datos de excel a matlab (eje y)
+            read_1 = readtable('Timgt_distance_composition'); % to read the data from the spreadsheet
+            x_datos1 = table2array(read_1(:, "Distance_um")); % to convert data from excel to matlab (axis x)
+            y_datos1 = table2array(read_1(:, "XTi")); % to convert data from excel to matlab (axis y)
 
-            Final_profile1 = [x_datos1 y_datos1];
+            Final_profile1 = [x_datos1 y_datos1]; % Profile from spreadsheet to matlab
             
             
             
             a= max((Final_profile1(:,1))); % profile total distance (micrometers)
              
-            N_pendientes = length(Final_profile1(:,1))-1;
+            N_pendientes = length(Final_profile1(:,1))-1; % number of slopes (to create a final profile of more points than actually measured)
             
-            while (mod(N_puntos,N_pendientes) ~= 0)
+            while (mod(N_puntos,N_pendientes) ~= 0) % the number of slopes to model has to be multiple of the measured points (fake profile)
                 N_puntos = N_puntos-1;
             end
             
-            Distancia_total = max(Final_profile1(:,1));
+            Distancia_total = max(Final_profile1(:,1)); % total distance of the profile
             
-            Resolution = max(Final_profile1(:,1))/N_puntos;
+            Resolution = max(Final_profile1(:,1))/N_puntos; % resolution of the modeled profile
             
-            Profile_fake = zeros(N_puntos,2); % Se crea la matriz para llenar el perfil falso
+            Profile_fake = zeros(N_puntos,2); % to create a matrix to fill the "fake" profile
              
-            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creando el eje x falso
+            Columna_x_fake = linspace(Final_profile1(1,1),max(Final_profile1(:,1)), N_puntos)'; % Creating the axis x (fake)
              
-            Columna_y_fake = zeros(1, N_puntos)'; % Creando el eje y falso
+            Columna_y_fake = zeros(1, N_puntos)'; % Creating the axis y (fake)
             
-            Pendiente_x_fake = zeros(1,N_pendientes); % Pendientes para determinar Columna_y_fake
+            Pendiente_x_fake = zeros(1,N_pendientes); % Slopes to determine "Columna_y_fake"
              
-            Posicion_x_fake = zeros(1,N_pendientes); % Coeficiente de posición para determinar Columna_y_fake
+            Posicion_x_fake = zeros(1,N_pendientes); % Position coefficient to determine "Columna_y_fake"
             
-            % Determinando los valores de las pendientes
+            % Determining the values of the slopes
             
             for i=1:N_pendientes
                 Pendiente_x_fake(i) = (Final_profile1(i+1,2)-Final_profile1(i,2))/...
                     (Final_profile1(i+1,1)-Final_profile1(i,1));
             end
             
-            % Determinando los valores del coeficiente de posición
+             % Determining the values of the position coefficient
+
             for i=1:N_pendientes
                 Posicion_x_fake(i) = Final_profile1(i,2)-(Final_profile1(i,1)*Pendiente_x_fake(i));
             end
             
-            % Creando la Columna_y_fake
+            % Creating the column "Columna_y_fake"
              
             for i=1:N_pendientes
                 for j=1:(N_puntos/N_pendientes) % Hasta la resolución
@@ -293,13 +294,15 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
                 end
             end
             
-            Profile_fake = [Columna_x_fake Columna_y_fake];
+            Profile_fake = [Columna_x_fake Columna_y_fake]; % That is the total fake profile based on the measured data.
             
             b=N_puntos;
             
-            %%%%%%%% Ahora a crear el perfil falso %%%%
+            %%%%%%%% Now we are going to create the initial fake profile (with the same number of elements as the measured fake profile) %%%%%%%
              
-            diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2;
+            diferencia = (Profile_fake(1,1)+Profile_fake(2,1))/2; % the resolution of the profiles to work (fakes)
+
+            % To create the first part of the profile (initial profile), first, we count the node the profile changes its composition (celda_1)
             
             for i=1:(length(Profile_fake(:,1)))
                 if (c > (Profile_fake(i,1)- diferencia))
@@ -324,19 +327,19 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
             x(:,1)= [distancia1']; % initial distance: "b" points until "a" micrometers.
             hour = linspace(0,t, t+1); % vector with times, 1 by 1 counter; total times have to be (t+1).
 
-            %%%%%%% CONDICIONES INTENSIVAS Y ERRORES %%%%%%%%%%%
+            %%%%%%% INTENSIVE CONDITIONS AND UNCERTAINTIES %%%%%%%%%%%
 
-            T1 = 273+T;
+            T1 = 273+T; % From celsius to Kelvin
 
-            T2 = T1 + T_error;
+            T2 = T1 + T_error; % Maximum temperature uncertainty
 
-            T3 = T1 - T_error;
+            T3 = T1 - T_error; % Minimum temperature uncertainty
             
-            NNO = 9.36-(24930/T1);
+            NNO = 9.36-(24930/T1); % From T to fO2 buffer
 
-            Xusp_1 = Xusp + Xusp_error;
+            Xusp_1 = Xusp + Xusp_error; % Maximum X_ulvospinel value
 
-            Xusp_2 = Xusp - Xusp_error;
+            Xusp_2 = Xusp - Xusp_error; % Minimum X_ulvospinel value
             
             f_O2 = 10^(NNO + deltaNNO); % value in Pa (see Myers & Eugster 1983)
 
@@ -350,7 +353,7 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
 
             %%%%% Calculating covariance %%%%%
              
-            temper = linspace(T - T_error, T + T_error, 20);
+            temper = linspace(T - T_error, T + T_error, 20); % covariance in the interval of interest
             
             for i = 1:20
                 fugacidad(i) = (-24930/temper(i) + 9.36 + deltaNNO);
@@ -436,17 +439,20 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
             counter =0;
             ccorre=0;
 
-if (Modelando == 1)
+            %%%%%%%%%% Now, it's time to perform calculations 
+            %%%%%%%%%% considering uncertainties %%%%%%%%%%%%%
+
+if (Modelando == 1) % Timescale calculation no uncertainties!
     for j=1:t+1; % t hours; depending on the resolution.
-    real_D = realD;
+    real_D = realD; % Diffusivity previously calculated according to Aragón et al., 1984
     
-    %%% Para el error se debe sumar en la línea que viene %%%
+    %%% For the error, it has to sum the next line %%%
     
     
     real_D1 = log10(real_D);
-    real_D = 10^(real_D1)*10^(12);
+    real_D = 10^(real_D1)*10^(12); % D adjusted to metres. 
     for i=2:b-1; % for "b" spaces
-        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     
     ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
@@ -460,27 +466,27 @@ if (Modelando == 1)
     end
     %[maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % only for the case of GUI.
     
     end
 
 end
 
-if (Modelando == 2)
+if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
     for j=1:t+1; % t hours; depending on the resolution.
 
-    real_D = realD;
-    real_D_T = realD_T;
-    real_D_fO2 = realD_fO2;
-    real_D_Xusp = realD_Xusp;
+    real_D = realD; % log_D previosly calculated according to Aragón et al., 1984
+    real_D_T = realD_T; % log_D considering error of T
+    real_D_fO2 = realD_fO2; % log_D considering error of fO2
+    real_D_Xusp = realD_Xusp; % log_D considering error of X_ulvospinel (composition)
     
-    %%% Para el error se debe sumar en la línea que viene %%%
+    %%% For the error, it has to sum the next line %%%
     
     
-    real_D1 = log10(real_D);
-    real_D1_T = log10(real_D_T);
-    real_D1_fO2 = log10(realD_fO2);
-    real_D1_Xusp = log10(realD_Xusp);
+    real_D1 = log10(real_D); % D previosly calculated
+    real_D1_T = log10(real_D_T); % D considering error of T
+    real_D1_fO2 = log10(realD_fO2); % D considering error of fO2
+    real_D1_Xusp = log10(realD_Xusp); % D considering error of X_ulvospinel (composition)
     
 
     real_D1 = real_D1 + ((real_D1 - real_D1_T)^2 + (real_D1 - real_D1_fO2)^2 + (real_D1 - real_D1_Xusp)^2 + (0.1)^2 + (2*D_cov_1*(real_D1_T/T_error)*(real_D1_fO2/(f_O2_error*10^5))))^0.5; 
@@ -488,7 +494,7 @@ if (Modelando == 2)
     real_D = 10^(real_D1)*10^(12);
     
     for i=2:b-1; % for "b" spaces
-        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     
     ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
@@ -502,35 +508,35 @@ if (Modelando == 2)
     end
     %[maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only for the case of GUI.
     
     end
 
 end
 
-if (Modelando == 3)
+if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
     for j=1:t+1; % t hours; depending on the resolution.
 
-    real_D = realD;
-    real_D_T = realD_T;
-    real_D_fO2 = realD_fO2;
-    real_D_Xusp = realD_Xusp;
+    real_D = realD; % log_D previously calculated according to Aragón et al., 1984
+    real_D_T = realD_T; % log_D considering the error of T. 
+    real_D_fO2 = realD_fO2; % log_D considering the error of fO_2.
+    real_D_Xusp = realD_Xusp; % log_D considering the error of composition (X_ulvospinel)
     
-    %%% Para el error se debe sumar en la línea que viene %%%
+    %%% For the error, it has to sum the next line %%%
     
     
-    real_D1 = log10(real_D);
-    real_D1_T = log10(realD_T1);
-    real_D1_fO2 = log10(realD_fO2_1);
-    real_D1_Xusp = log10(realD_Xusp1);
+    real_D1 = log10(real_D); % D previously calculated 
+    real_D1_T = log10(realD_T1); % D considering the error of T.
+    real_D1_fO2 = log10(realD_fO2_1); % D considering the error of fO2.
+    real_D1_Xusp = log10(realD_Xusp1); % D considering the error of composition (X_ulvospinel).
     
 
-    real_D1 = real_D1 - ((real_D1 - real_D1_T)^2 + (real_D1 - real_D1_fO2)^2 + (real_D1 - real_D1_Xusp)^2 + (0.1)^2 + (2*D_cov_1*(real_D1_T/T_error)*(real_D1_fO2/(f_O2_error1*10^5))))^0.5;
+    real_D1 = real_D1 - ((real_D1 - real_D1_T)^2 + (real_D1 - real_D1_fO2)^2 + (real_D1 - real_D1_Xusp)^2 + (0.1)^2 + (2*D_cov_1*(real_D1_T/T_error)*(real_D1_fO2/(f_O2_error1*10^5))))^0.5; % Total error propagation
 
     real_D = 10^(real_D1)*10^(12);
     
     for i=2:b-1; % for "b" spaces
-        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j)));
+        C(i,j+1) = C(i,j) + real_D*res/(x(2,1)^2+x(1,1)^2-2*x(1,1)*x(2,1))*((C(i+1,j)-2*C(i,j)+ C(i-1,j))); % Fick's second law
     end
     
     ccorre=sum((C(:,j)-Profile_fake(:,2)).^2); % Last-squares fitting
@@ -544,12 +550,13 @@ if (Modelando == 3)
     end
     %[maximum_r,maximum_time] = max(Coef1)
     
-    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+    %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only fo the case of GUI.
     
     end
 
 end
 
+% The script will create the figure for the freeware %
 
 cla(app.UIAxes_Diff, "reset")
 
