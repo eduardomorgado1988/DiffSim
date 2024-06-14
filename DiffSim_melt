@@ -265,6 +265,14 @@ classdef DiffSim_Melt < matlab.apps.AppBase
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only for the case of GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 end
@@ -311,6 +319,14 @@ if (Modelando == 2) % Timescale calculation for maximum timescale (uncertainty)
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % solo para el caso del GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 end
@@ -357,6 +373,14 @@ if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only fo the case of GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 end
