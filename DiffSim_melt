@@ -118,7 +118,7 @@ classdef DiffSim_Melt < matlab.apps.AppBase
             %%%%%%%%%%%%%%% After reviewer corrections %%%%%%%%%%%%
 
             if N_puntos < length(x_datos1)
-                N_puntos = length(x_datos1)
+                N_puntos = length(x_datos1) % The number of points has to be equal or higher than the measured points
             end
 
             %%%%%%%%%%%%% Done %%%%%%%%%%%%%%%%%%%%%
