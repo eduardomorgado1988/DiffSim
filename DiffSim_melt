@@ -115,6 +115,14 @@ classdef DiffSim_Melt < matlab.apps.AppBase
 
             Final_profile1 = [x_datos1 y_datos1]; % Profile from spreadsheet to matlab
 
+            %%%%%%%%%%%%%%% After reviewer corrections %%%%%%%%%%%%
+
+            if N_puntos < length(x_datos1)
+                N_puntos = length(x_datos1)
+            end
+
+            %%%%%%%%%%%%% Done %%%%%%%%%%%%%%%%%%%%%
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             a= max((Final_profile1(:,1))); % profile total distance (micrometers)
