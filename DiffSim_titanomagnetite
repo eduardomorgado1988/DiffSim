@@ -248,6 +248,14 @@ classdef DiffSim_Titanomagnetite < matlab.apps.AppBase
             y_datos1 = table2array(read_1(:, "XTi")); % to convert data from excel to matlab (axis y)
 
             Final_profile1 = [x_datos1 y_datos1]; % Profile from spreadsheet to matlab
+
+            %%%%%%%%%%%%%%% After reviewer corrections %%%%%%%%%%%%
+
+            if N_puntos < length(x_datos1)
+                N_puntos = length(x_datos1) % The number of points has to be equal or higher than the measured points
+            end
+
+            %%%%%%%%%%%%% Done %%%%%%%%%%%%%%%%%%%%%
             
             
             
@@ -467,6 +475,14 @@ if (Modelando == 1) % Timescale calculation no uncertainties!
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % only for the case of GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 
@@ -509,6 +525,14 @@ if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only for the case of GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 
@@ -551,6 +575,14 @@ if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
     %[maximum_r,maximum_time] = max(Coef1)
     
     %r= findall(0, 'Name', 'DiffSimul_titanomagnetite'); % Only fo the case of GUI.
+
+        %%%%%%% After reviewer corrections %%%%%%%%%
+
+        if max_time(j+1,1)>max_time(j,1) % If the SSD increases, then the modelling will stop
+            j=t+1;
+        end
+
+        %%%%%% Done %%%%%%%%%%%%%
     
     end
 
