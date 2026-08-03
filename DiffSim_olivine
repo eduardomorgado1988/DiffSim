@@ -502,7 +502,7 @@ if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
         D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P+P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to P
         D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000-8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D error related to experiments
         % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
-        D = D_1 + ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*((D_error_T - D_1)/T_error)*D_cov_1*((D_error_fO2 - D_1)/fO_2_er1))))^0.5; % Total error propagation
+        D = D_1 + ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*((D_error_T - D_1))*D_cov_1*((D_error_fO2 - D_1)))))^0.5; % Total error propagation
         D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
@@ -552,7 +552,7 @@ if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
         D_error_P = 10^(-9.21)*((fO_2)/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-(201000+((P-P_error)-10^5)*7*10^(-6))/(R*(T)))*(10^12); % D error related to P
         D_H1 = 10^(-9.21)*(fO_2/10^(-7))^(1/6)*10^(3*(0.9-C(i,j)))*exp(-((201000+8000)+(P-10^5)*7*10^(-6))/(R*T))*(10^12); % D error related to experiments
         % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
-        D = D_1 - ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T/T_error)*D_cov_1*(D_error_fO2/f_O_2_er))))^0.5; % Total error propagation
+        D = D_1 - ((abs(D_error_T-D_1))^2+(abs(D_error_fO2-D_1))^2+(abs(D_error_P-D_1))^2+(abs(D_H1-D_1))^2+(abs(2*(D_error_T-D_1)*D_cov_1*(D_error_fO2 - D_1))))^0.5; % Total error propagation
         D = (D/6*(cos(alpha_1))^2)+(D/6*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
