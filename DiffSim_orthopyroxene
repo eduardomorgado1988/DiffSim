@@ -267,7 +267,7 @@ classdef DiffSim_Orthopyroxene < matlab.apps.AppBase
             end
             
             prom_temper = mean(temper); % mean of T
-            prom_fugacidad = mean(fugacidad); % mean of fO2
+            prom_fugacidad = mean(fugacidad2); % mean of fO2
             
             for i =1:20
                 x_prima(i) = temper(i) - prom_temper; % T - average T
@@ -378,7 +378,7 @@ if (Modelando == 2) % Timescale calculation for minimum timescale (uncertainty)
         
         % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
 
-        D = D_1 + ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*(D_cov_1/T_error)*D_error_T*(D_error_fO2/fO_2_error1))))^0.5; % Total error propagation
+        D = D_1 + ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*(D_cov_1-D_1)*D_error_T*(D_error_fO2-D_1))))^0.5; % Total error propagation
         D = (D/3.5*(cos(alpha_1))^2)+(D/3.5*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
@@ -430,7 +430,7 @@ if (Modelando == 3) % Timescale calculation for maximum timescale (uncertainty)
         D_error_1 = 1.12*10^(-6)*(fO_2)^(0.053+0.027)*exp(-(308000)/(R*T))*10^12; % D error related to experiments
         
         % Comment: D = (factor/6)*D*10^12; % remember to work with crystal orientation
-        D = D_1 - ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*D_cov_1*(D_error_T/T_error)*(D_error_fO2/fO_2_error1))))^0.5; % Total error propagatio
+        D = D_1 - ((abs(D_error_T-D_1))^2 + (abs(D_error_fO2-D_1))^2 + (abs(D_error_1-D_1))^2 + (abs(2*(D_cov_1-D_1)*D_error_T*(D_error_fO2-D_1))))^0.5; % Total error propagation
         D = (D/3.5*(cos(alpha_1))^2)+(D/3.5*(cos(beta_1))^2)+(D*(cos(gamma_1))^2); % Considering crystal orientation (Philibert 1991 equation) 
         if D>D1
             D1=D;
